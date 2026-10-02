@@ -6,6 +6,7 @@ pkgs.mkShell {
   # These packages will be available only inside the nix-shell
   buildInputs = [
     pkgs.yt-dlp
+    pkgs.ffmpeg
     pkgs.nodejs_22
     pkgs.gnumake
     pkgs.gawk
