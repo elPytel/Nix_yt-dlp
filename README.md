@@ -3,7 +3,7 @@
 - [Návod k použití](#návod-k-použití)
   - [Instalace závislostí](#instalace-závislostí)
   - [Ukázka obsahu `playlists.conf`](#ukázka-obsahu-playlistsconf)
-  - [Parámtery příkazu `yt-dlp`](#parámtery-příkazu-yt-dlp)
+  - [Parametry příkazu `yt-dlp`](#parametry-příkazu-yt-dlp)
   - [Algoritmus pro stažení obsahu playlistů jako podcastu:](#algoritmus-pro-stažení-obsahu-playlistů-jako-podcastu)
 
 ## Instalace závislostí
@@ -44,9 +44,9 @@ Audio knihy a rozhlasové hry | https://www.youtube.com/watch?v=nOQZg-gMY3w&list
 Audioknihy v češtině - Narration Line | https://www.youtube.com/watch?v=D8ZvktGHtn0&list=PLc69hRr8hdoC9YoLciNfunXzV8PJLQapK
 ```
 Pro stažení obsahu playlistů jako jednotlivé audioknihy - každý soubor zvlášt s výchozím jménem, použte příkaz:
-`make audioknihy`
+`make audiobook`
 
-## Parámtery příkazu `yt-dlp`
+## Parametry příkazu `yt-dlp`
 Příkaz:
 ```bash
 yt-dlp \

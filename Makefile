@@ -5,13 +5,16 @@ MANIFEST := .yt-dlp-items.tsv
 STATE    := .yt-dlp-state
 STAGING  := $(STATE)/downloads
 PARALEL  := 4
+CPU_CORES := $(shell nproc 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)
+CONVERT_PARALLEL ?= $(shell parallel=$$(( $(CPU_CORES) - 2 )); [ $$parallel -lt 2 ] && parallel=2; echo $$parallel)
 
 .DEFAULT_GOAL := all
 
 # The manifest is generated before the recursive make starts.
 ITEM_TARGETS := $(shell awk -F '\t' '{print $$1}' $(MANIFEST) 2>/dev/null)
+CONVERT_TARGETS := $(addprefix convert-,$(ITEM_TARGETS))
 
-.PHONY: all podcast video audiobook convert FORCE $(ITEM_TARGETS)
+.PHONY: all podcast video audiobook convert $(ITEM_TARGETS) $(CONVERT_TARGETS)
 
 all: podcast
 
@@ -19,7 +22,7 @@ $(CONFIG):
 	@echo "Configuration file $(CONFIG) not found. Please create it with playlist names and URLs."
 
 # Expand every configured playlist into one Make target per video.
-$(MANIFEST): FORCE $(CONFIG)
+$(MANIFEST): $(CONFIG)
 	@tmp="$@.tmp"; \
 	rm -f "$$tmp"; \
 	: > "$$tmp"; \
@@ -69,30 +72,16 @@ $(ITEM_TARGETS): item-%:
 		echo "Unknown MODE: $(MODE)" >&2; exit 1; \
 	fi
 
-# Convert downloaded audio as soon as its download stamp appears.
+# Per-item conversion targets are defined below.
+$(CONVERT_TARGETS): convert-%:
+	@./scripts/convert.sh --mode "$(MODE)" --manifest "$(MANIFEST)" \
+		--state "$(STATE)" --target "$*"
+
+# Convert downloaded audio items in parallel, limited by CONVERT_PARALLEL.
+convert: MODE ?= audiobook
 convert:
 	@if [ "$(MODE)" = "video" ]; then exit 0; fi; \
-	mkdir -p "$(STATE)"; \
-	while :; do \
-		pending=0; \
-		while IFS=$$(printf '\t') read -r target name index url; do \
-			done="$(STATE)/$$target.done"; \
-			skipped="$(STATE)/$$target.skipped"; \
-			converted="$(STATE)/$$target.converted"; \
-			if [ -f "$$skipped" ]; then continue; fi; \
-			if [ -f "$$done" ] && [ ! -f "$$converted" ]; then \
-				source=$$(find "$(STAGING)/$$target" -type f -print -quit); \
-				if [ -z "$$source" ]; then echo "Downloaded file missing: $$target" >&2; exit 1; fi; \
-				base=$${source##*/}; base=$${base%.*}; mkdir -p "$$name"; \
-				if [ "$(MODE)" = "podcast" ]; then output="$$name/$$(printf '%02d' "$$index") - $$base.m4a"; \
-				else output="$$name/$$base.m4a"; fi; \
-				ffmpeg -y -i "$$source" -map_metadata 0 -vn -c:a aac -b:a 192k "$$output" && \
-				rm -rf "$(STAGING)/$$target" && touch "$$converted"; \
-			elif [ ! -f "$$converted" ]; then pending=1; fi; \
-		done < "$(MANIFEST)"; \
-		[ "$$pending" -eq 0 ] && break; \
-		sleep 1; \
-	done
+	$(MAKE) MODE=$(MODE) -j $(CONVERT_PARALLEL) $(CONVERT_TARGETS)
 
 podcast: MODE := podcast
 podcast: $(MANIFEST)
@@ -115,4 +104,8 @@ audiobook: $(MANIFEST)
 	[ $$download_status -eq 0 ] && [ $$convert_status -eq 0 ]
 	@echo "All playlists have been processed. Audiobook is ready."
 
-FORCE:
+help:
+	@echo "Usage: make [podcast|video|audiobook]"
+	@echo "  podcast   - Download audio from playlists and convert to podcast format."
+	@echo "  video     - Download video from playlists."
+	@echo "  audiobook - Download audio from playlists and convert to audiobook format."

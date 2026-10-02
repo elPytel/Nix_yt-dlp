@@ -1,6 +1,10 @@
-playlists.conf
+# Odstraň vše:
 *
+
+# Přidej:
 !.git*
 !Makefile
 !shell.nix
 !README.md
+!scripts
+!*.sh
