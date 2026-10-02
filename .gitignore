@@ -1,0 +1,6 @@
+playlists.conf
+*
+!.git*
+!Makefile
+!shell.nix
+!README.md
