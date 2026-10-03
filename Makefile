@@ -104,8 +104,18 @@ audiobook: $(MANIFEST)
 	[ $$download_status -eq 0 ] && [ $$convert_status -eq 0 ]
 	@echo "All playlists have been processed. Audiobook is ready."
 
+clean:
+	@rm -rf "$(STATE)" "$(STAGING)"
+	@echo "Cleaned up all downloaded files."
+
+clean-all: clean
+	@rm -rf "$(MANIFEST)"
+	@echo "Cleaned up all download lists."
+
 help:
 	@echo "Usage: make [podcast|video|audiobook]"
 	@echo "  podcast   - Download audio from playlists and convert to podcast format."
 	@echo "  video     - Download video from playlists."
 	@echo "  audiobook - Download audio from playlists and convert to audiobook format."
+	@echo "  clean     - Remove all downloaded files and temporary state."
+	@echo "  clean-all - Remove all downloaded files, temporary state, and manifest."
